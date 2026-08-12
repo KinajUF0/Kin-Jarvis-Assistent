@@ -224,7 +224,7 @@ python scripts/test_components.py
 
 ## 🤝 Автор
 
-**Алексей** ([@KinajUF0](https://github.com/KinajUF0))
+**Kinaj** ([@KinajUF0](https://github.com/KinajUF0))
 
 ---
 
@@ -233,5 +233,5 @@ python scripts/test_components.py
 MIT License — используйте свободно!
 
 <p align="center">
-  <sub>Сделано с ❤️ для Алексея</sub>
+  <sub>Сделано с ❤️ для Kinaj</sub>
 </p>
