@@ -81,7 +81,9 @@ class KinAssistant:
         """Handle incoming speech from continuous listener."""
         if not self._active:
             return
-        self.process_text(text, source="voice")
+        result = self.process_text(text, source="voice")
+        if result is None:
+            logger.debug("No wake word in: %s", text)
 
     def process_text(self, text: str, source: str = "text") -> dict[str, Any] | None:
         """
@@ -183,6 +185,7 @@ class KinAssistant:
         self.router.register_with_gemini(self.gemini)
 
     @property
+    def history(self) -> list[dict[str, Any]]:
         return list(self._history)
 
     @property

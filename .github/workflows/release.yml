@@ -26,6 +26,9 @@ jobs:
           pip install -r requirements.txt
           pip install pyinstaller
 
+      - name: Generate icon
+        run: python scripts/generate_icon.py
+
       - name: Build EXE with PyInstaller
         run: pyinstaller packaging/kin_jarvis.spec --noconfirm
 

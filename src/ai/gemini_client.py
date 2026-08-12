@@ -8,6 +8,8 @@ from typing import Any, Callable
 import google.generativeai as genai
 from google.generativeai.types import FunctionDeclaration, Tool
 
+from src.ai.gemini_utils import format_gemini_error
+
 logger = logging.getLogger(__name__)
 
 SYSTEM_PROMPT = """Ты — Кин (Kin/Jarvis/Astra), персональный AI-ассистент пользователя Kinaj.
@@ -223,7 +225,7 @@ class GeminiClient:
         except Exception as exc:
             logger.exception("Gemini error: %s", exc)
             return {
-                "text": f"Произошла ошибка при обращении к AI: {exc}",
+                "text": format_gemini_error(exc),
                 "action": None,
                 "success": False,
             }
@@ -236,4 +238,4 @@ class GeminiClient:
             response = self._chat.send_message(message)
             return response.text or ""
         except Exception as exc:
-            return f"Ошибка: {exc}"
+            return format_gemini_error(exc)
