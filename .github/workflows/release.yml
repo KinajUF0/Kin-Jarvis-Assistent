@@ -27,23 +27,16 @@ jobs:
           pip install pyinstaller
 
       - name: Build EXE with PyInstaller
-        run: |
-          pyinstaller build/kin_jarvis.spec --noconfirm
+        run: pyinstaller packaging/kin_jarvis.spec --noconfirm
 
       - name: Install Inno Setup
-        run: choco install innosetup -y
+        run: choco install innosetup -y --no-progress
 
       - name: Build Installer
-        run: |
-          mkdir assets 2>$null
-          if (-not (Test-Path assets/logo.ico)) {
-            copy assets/logo.png assets/logo.ico -ErrorAction SilentlyContinue
-          }
-          iscc installer/kin_jarvis.iss
+        run: iscc installer/kin_jarvis.iss
 
       - name: Create portable ZIP
-        run: |
-          Compress-Archive -Path dist/KinJarvis/* -DestinationPath dist/KinJarvis-Portable.zip
+        run: Compress-Archive -Path dist/KinJarvis/* -DestinationPath dist/KinJarvis-Portable.zip -Force
 
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2

@@ -28,7 +28,7 @@ python -m pip install pyinstaller
 
 echo.
 echo Building EXE...
-pyinstaller build/kin_jarvis.spec --noconfirm
+pyinstaller packaging/kin_jarvis.spec --noconfirm
 if not %ERRORLEVEL%==0 (
     echo [ERROR] PyInstaller failed.
     pause

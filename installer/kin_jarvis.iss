@@ -20,7 +20,6 @@ DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
 OutputDir=..\dist\installer
 OutputBaseFilename=KinJarvis-Setup-{#MyAppVersion}
-SetupIconFile=..\assets\logo.ico
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
