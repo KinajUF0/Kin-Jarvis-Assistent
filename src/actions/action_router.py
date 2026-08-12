@@ -1,4 +1,4 @@
-"""Action router — connects Gemini function calls to handlers."""
+"""Action router — execute commands locally or via Gemini."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 class ActionRouter:
-    """Register and route all action handlers to Gemini."""
+    """Route and execute actions."""
 
     def __init__(self, config: Config) -> None:
         self._config = config
@@ -27,8 +27,7 @@ class ActionRouter:
         )
         self.system = SystemControl()
 
-    def register_with_gemini(self, gemini: GeminiClient) -> None:
-        handlers = {
+        self._handlers = {
             "open_application": self._open_application,
             "close_application": self._close_application,
             "open_discord_chat": self._open_discord_chat,
@@ -44,7 +43,19 @@ class ActionRouter:
             "get_system_info": self._get_system_info,
             "run_command": self._run_command,
         }
-        for name, handler in handlers.items():
+
+    def execute(self, action: str, **params: Any) -> dict[str, Any]:
+        """Execute action directly — no AI."""
+        if action == "small_talk":
+            return {"success": True, "message": params.get("text", "Слушаю.")}
+
+        handler = self._handlers.get(action)
+        if not handler:
+            return {"success": False, "message": f"Неизвестное действие: {action}"}
+        return handler(**params)
+
+    def register_with_gemini(self, gemini: GeminiClient) -> None:
+        for name, handler in self._handlers.items():
             gemini.register_action(name, handler)
 
     def _open_application(self, app_name: str) -> dict[str, Any]:

@@ -13,6 +13,7 @@ import customtkinter as ctk
 from src.ai.gemini_utils import test_api_key
 from src.core.config import WAKE_WORD_DISPLAY
 from src.core.paths import get_assets_dir, get_env_path
+from src.core.wake_word import strip_wake_word
 from src.voice.listener import list_microphones
 
 if TYPE_CHECKING:
@@ -100,8 +101,12 @@ class KinApp(ctk.CTk):
         ).pack(anchor="w", padx=16)
 
         mics = list_microphones()
-        mic_labels = [f"{idx}: {name[:40]}" for idx, name in mics] if mics else ["По умолчанию"]
-        self._mic_map = {label: mics[i][0] for i, label in enumerate(mic_labels)} if mics else {}
+        if mics:
+            mic_labels = [name[:45] for _, name in mics]
+            self._mic_map = {label: mics[i][0] for i, label in enumerate(mic_labels)}
+        else:
+            mic_labels = ["По умолчанию"]
+            self._mic_map = {}
 
         self._mic_var = ctk.StringVar(value=mic_labels[0])
         self._mic_menu = ctk.CTkOptionMenu(
@@ -262,9 +267,6 @@ class KinApp(ctk.CTk):
         if self.assistant.is_active:
             self.assistant.stop()
         else:
-            if self.assistant.config.validate():
-                self._add_msg("system", "Сначала сохраните рабочий Gemini API ключ.", False)
-                return
             threading.Thread(target=self.assistant.start, daemon=True).start()
 
     def _send(self) -> None:
@@ -275,14 +277,11 @@ class KinApp(ctk.CTk):
         threading.Thread(target=self._process_command, args=(text,), daemon=True).start()
 
     def _process_command(self, text: str) -> None:
-        if self.assistant.config.validate():
-            self._add_msg("system", "Сначала сохраните рабочий Gemini API ключ.", False)
-            return
         result = self.assistant.send_text_command(text)
         if result is None:
             self._add_msg(
                 "system",
-                f"Нужно обращаться по имени: {', '.join(WAKE_WORD_DISPLAY.values())}",
+                f"Обращайся по имени: {', '.join(WAKE_WORD_DISPLAY.values())}",
                 False,
             )
 
@@ -290,35 +289,33 @@ class KinApp(ctk.CTk):
         self._mic_btn.configure(fg_color=COLORS["red"])
 
         def listen() -> None:
-            text = self.assistant.listener.listen_once(timeout=6, phrase_limit=12)
+            text = self.assistant.listener.listen_once(timeout=6, phrase_limit=12, silent=False)
             self.after(0, lambda: self._mic_btn.configure(fg_color=COLORS["card"]))
             if not text:
                 return
-            self.after(0, lambda: self._input.delete(0, "end"))
             self.after(0, lambda: self._input.insert(0, text))
-            if self.assistant.config.validate():
-                self.after(0, lambda: self._add_msg("system", "Сначала сохраните API ключ.", False))
-                return
-            result = self.assistant.process_text(text, source="voice")
-            if result is None:
+            if not strip_wake_word(text).detected:
                 self.after(
                     0,
                     lambda: self._add_msg(
                         "system",
-                        f"Услышал: «{text}». Обращайся: Кин, Джарvis, Астра...",
+                        f"Скажи: «Кин, ...» — услышал: «{text}»",
                         False,
                     ),
                 )
+                return
+            self.assistant.process_text(text, source="voice")
 
         threading.Thread(target=listen, daemon=True).start()
 
     def _check_api_key(self) -> None:
-        if self.assistant.config.validate():
-            self._add_msg(
-                "system",
-                "Введите Gemini API ключ слева.\nПолучить: aistudio.google.com/apikey",
-                False,
-            )
+        self._add_msg(
+            "system",
+            "Команды (Discord, окна, браузер) работают БЕЗ ключа.\n"
+            "Gemini — только для сложных вопросов.\n"
+            "Или установи Ollama (ollama.com) — работает в РФ.",
+            True,
+        )
 
     def _save_api_key(self) -> None:
         key = self._api_entry.get().strip()
