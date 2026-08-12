@@ -174,8 +174,15 @@ class KinAssistant:
         self._add_message("assistant", response)
         return response
 
+    def reload_api_key(self, api_key: str) -> None:
+        """Reinitialize Gemini client after API key change."""
+        self.gemini = GeminiClient(
+            api_key=api_key,
+            model_name=self.config.gemini_model,
+        )
+        self.router.register_with_gemini(self.gemini)
+
     @property
-    def history(self) -> list[dict[str, Any]]:
         return list(self._history)
 
     @property

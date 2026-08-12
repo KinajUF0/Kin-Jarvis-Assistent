@@ -2,7 +2,7 @@
 ; Build: iscc installer/kin_jarvis.iss
 
 #define MyAppName "Kin Jarvis"
-#define MyAppVersion "2.0.0"
+#define MyAppVersion "2.0.3"
 #define MyAppPublisher "Kinaj"
 #define MyAppURL "https://github.com/KinajUF0/Kin-Jarvis-Assistent"
 #define MyAppExeName "KinJarvis.exe"
@@ -20,6 +20,8 @@ DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
 OutputDir=..\dist\installer
 OutputBaseFilename=KinJarvis-Setup-{#MyAppVersion}
+SetupIconFile=..\assets\logo.ico
+UninstallDisplayIcon={app}\KinJarvis.exe
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
@@ -38,9 +40,9 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Source: "..\dist\KinJarvis\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
+Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\{#MyAppExeName}"
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
+Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon; IconFilename: "{app}\{#MyAppExeName}"
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "Launch {#MyAppName}"; Flags: nowait postinstall skipifsilent
