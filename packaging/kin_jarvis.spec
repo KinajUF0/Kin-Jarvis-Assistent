@@ -5,19 +5,19 @@ import os
 from pathlib import Path
 
 block_cipher = None
-project_root = Path(SPECPATH).parent.parent
+project_root = Path(SPECPATH).parent
 
 import customtkinter
 ctk_dir = os.path.dirname(customtkinter.__file__)
 
 a = Analysis(
-    ['src/main.py'],
+    [str(project_root / 'src' / 'main.py')],
     pathex=[str(project_root)],
     binaries=[],
     datas=[
-        ('config', 'config'),
-        ('assets', 'assets'),
-        ('.env.example', '.'),
+        (str(project_root / 'config'), 'config'),
+        (str(project_root / 'assets'), 'assets'),
+        (str(project_root / '.env.example'), '.'),
         (ctk_dir, 'customtkinter'),
     ],
     hiddenimports=[
