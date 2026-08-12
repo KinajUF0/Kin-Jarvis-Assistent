@@ -71,12 +71,11 @@ class DiscordHandler:
         )
 
         if not result:
-            # Try partial ratio for substring matches
             result = process.extractOne(
                 query_lower,
                 choices,
                 scorer=fuzz.partial_ratio,
-                score_cutoff=self._threshold - 10,
+                score_cutoff=self._threshold,
             )
 
         if result:
