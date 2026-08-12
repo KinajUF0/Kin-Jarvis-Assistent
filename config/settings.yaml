@@ -1,0 +1,23 @@
+# Kin / Jarvis Assistant Settings
+
+assistant_name: "Кин"
+gemini_model: "gemini-2.0-flash"
+speech_language: "ru-RU"
+tts_voice: "ru-RU-DmitryNeural"
+
+# Wake words (hardcoded in src/core/config.py):
+# Джарвис, Jarvis, Кин, Kin, Астра, Astra
+
+discord:
+  fuzzy_match_threshold: 60  # 0-100, lower = more permissive matching
+  navigation_delay_ms: 500   # Delay before keyboard automation
+
+voice:
+  energy_threshold: 300
+  pause_threshold: 0.8
+  phrase_time_limit: 15
+
+ui:
+  theme: "dark"
+  window_width: 1100
+  window_height: 750

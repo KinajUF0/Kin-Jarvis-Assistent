@@ -1,0 +1,82 @@
+{
+  "apps": {
+    "discord": {
+      "display_name": "Discord",
+      "process_names": ["discord", "Discord"],
+      "paths": [
+        "%LOCALAPPDATA%\\Discord\\Update.exe --processStart Discord.exe",
+        "%LOCALAPPDATA%\\Discord\\app-1.0.9159\\Discord.exe",
+        "C:\\Users\\%USERNAME%\\AppData\\Local\\Discord\\Update.exe"
+      ],
+      "uri": "discord://"
+    },
+    "chrome": {
+      "display_name": "Google Chrome",
+      "process_names": ["chrome"],
+      "paths": [
+        "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+        "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+        "google-chrome",
+        "google-chrome-stable"
+      ],
+      "uri": "https://google.com"
+    },
+    "firefox": {
+      "display_name": "Mozilla Firefox",
+      "process_names": ["firefox"],
+      "paths": [
+        "C:\\Program Files\\Mozilla Firefox\\firefox.exe",
+        "firefox"
+      ]
+    },
+    "steam": {
+      "display_name": "Steam",
+      "process_names": ["steam"],
+      "paths": [
+        "C:\\Program Files (x86)\\Steam\\steam.exe",
+        "steam"
+      ],
+      "uri": "steam://"
+    },
+    "spotify": {
+      "display_name": "Spotify",
+      "process_names": ["spotify"],
+      "paths": [
+        "%APPDATA%\\Spotify\\Spotify.exe",
+        "spotify"
+      ],
+      "uri": "spotify:"
+    },
+    "telegram": {
+      "display_name": "Telegram",
+      "process_names": ["telegram"],
+      "paths": [
+        "%APPDATA%\\Telegram Desktop\\Telegram.exe",
+        "telegram-desktop"
+      ]
+    },
+    "vscode": {
+      "display_name": "Visual Studio Code",
+      "process_names": ["code"],
+      "paths": [
+        "code",
+        "C:\\Users\\%USERNAME%\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe"
+      ]
+    },
+    "notepad": {
+      "display_name": "Блокнот",
+      "process_names": ["notepad"],
+      "paths": ["notepad"]
+    },
+    "explorer": {
+      "display_name": "Проводник",
+      "process_names": ["explorer"],
+      "paths": ["explorer"]
+    },
+    "calculator": {
+      "display_name": "Калькулятор",
+      "process_names": ["calculator", "calc"],
+      "paths": ["calc"]
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "contacts": [
+    {
+      "display_name": "Сэм",
+      "username": "[S_E_X_Y] Quinsames",
+      "aliases": ["сэм", "sam", "sem", "сем", "quinsames", "quins", "sex y"],
+      "search_terms": ["S_E_X_Y", "Quinsames", "[S_E_X_Y] Quinsames"],
+      "quick_switcher_query": "Quinsames",
+      "notes": "Пример контакта — замените на своих друзей"
+    },
+    {
+      "display_name": "Алексей",
+      "username": "KinajUF0",
+      "aliases": ["алексей", "alex", "alexey", "леха", "лёха", "kinaj"],
+      "search_terms": ["KinajUF0", "Kinaj"],
+      "quick_switcher_query": "KinajUF0",
+      "notes": "Пример — ваш Discord ник"
+    }
+  ],
+  "_help": {
+    "description": "Контакты Discord для нечёткого поиска",
+    "fields": {
+      "display_name": "Человекочитаемое имя для отображения",
+      "username": "Полный Discord ник (Display Name + Username)",
+      "aliases": "Варианты имён, как вы можете обращаться (для fuzzy match)",
+      "search_terms": "Дополнительные строки для поиска",
+      "quick_switcher_query": "Что вводить в Ctrl+K Quick Switcher Discord"
+    },
+    "example_command": "Кин, открой в Discord чат с Сэмом"
+  }
+}
