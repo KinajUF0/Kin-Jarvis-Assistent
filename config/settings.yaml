@@ -1,7 +1,7 @@
 # Kin / Jarvis Assistant Settings
 
 assistant_name: "Кин"
-gemini_model: "gemini-2.0-flash"
+gemini_model: "gemini-2.5-flash-lite"
 speech_language: "ru-RU"
 tts_voice: "ru-RU-DmitryNeural"
 

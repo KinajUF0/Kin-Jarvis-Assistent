@@ -72,7 +72,7 @@ class Config:
 
     @property
     def gemini_model(self) -> str:
-        return os.getenv("GEMINI_MODEL", self._settings.get("gemini_model", "gemini-2.0-flash"))
+        return os.getenv("GEMINI_MODEL", self._settings.get("gemini_model", "gemini-2.5-flash-lite"))
 
     @property
     def speech_language(self) -> str:
