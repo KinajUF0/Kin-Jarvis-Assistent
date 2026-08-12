@@ -43,8 +43,16 @@ cd Kin-Jarvis-Assistent
 
 ### 2. Установка (Windows)
 
-```bash
+**Вариант A — BAT (рекомендуется):**
+
+```bat
 scripts\install_windows.bat
+```
+
+**Вариант B — PowerShell (если BAT выдаёт ошибки кодировки):**
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/install_windows.ps1
 ```
 
 ### 3. API Key

@@ -26,9 +26,19 @@ cd Kin-Jarvis-Assistent
 
 ## Шаг 3: Автоматическая установка (Windows)
 
-```bash
+**Способ 1 — BAT-файл:**
+
+```bat
 scripts\install_windows.bat
 ```
+
+**Способ 2 — PowerShell (если BAT выдаёт ошибки вроде `'errorlevel' is not recognized`):**
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/install_windows.ps1
+```
+
+> Если BAT-файл показывает кракозябры или `'errorlevel' is not recognized` — используйте PowerShell-скрипт. Это проблема кодировки Windows cmd.exe с UTF-8.
 
 Скрипт:
 - Создаст виртуальное окружение `venv/`
