@@ -1,9 +1,8 @@
-"""Main assistant orchestrator — local commands first, AI optional."""
+"""Main assistant — local commands + Ollama AI."""
 
 from __future__ import annotations
 
 import logging
-import os
 from datetime import datetime
 from typing import Any, Callable
 
@@ -24,18 +23,23 @@ logger = logging.getLogger(__name__)
 
 
 class KinAssistant:
-    """Central orchestrator — works WITHOUT Gemini for most commands."""
+    """Kin assistant — local commands + Ollama (primary AI)."""
 
     def __init__(self, config: Config | None = None) -> None:
         self.config = config or Config()
         self.router = ActionRouter(self.config)
 
-        self.gemini: GeminiClient | None = None
         self.ollama = OllamaClient(
-            base_url=os.getenv("OLLAMA_URL", "http://127.0.0.1:11434"),
-            model=os.getenv("OLLAMA_MODEL", "llama3.2"),
+            base_url=self.config.ollama_url,
+            model=self.config.ollama_model,
         )
-        self._init_gemini_if_key()
+        self.gemini: GeminiClient | None = None
+        if self.config.has_gemini_key() and self.config.ai_provider in ("gemini", "both"):
+            self.gemini = GeminiClient(
+                api_key=self.config.gemini_api_key,
+                model_name=self.config.gemini_model,
+            )
+            self.router.register_with_gemini(self.gemini)
 
         self.listener = SpeechListener(
             language=self.config.speech_language,
@@ -52,23 +56,17 @@ class KinAssistant:
         self.on_message: Callable[[str, str, bool], None] | None = None
         self.on_listening_change: Callable[[bool], None] | None = None
 
-    def _init_gemini_if_key(self) -> None:
-        key = self.config.gemini_api_key
-        if key and key != "your_gemini_api_key_here":
-            self.gemini = GeminiClient(api_key=key, model_name=self.config.gemini_model)
-            self.router.register_with_gemini(self.gemini)
+    def ollama_status(self) -> dict[str, Any]:
+        return self.ollama.status()
 
     def _on_error(self, error: str) -> None:
-        """Only critical errors — not noise."""
         logger.warning("Listener: %s", error)
         self._add_message("system", error, success=False)
 
     def _on_speech(self, text: str) -> None:
         if not self._active:
             return
-        # Only react if wake word present — ignore everything else silently
         if not strip_wake_word(text).detected:
-            logger.debug("Ignored (no wake word): %s", text)
             return
         self.process_text(text, source="voice")
 
@@ -80,25 +78,61 @@ class KinAssistant:
         text = result.get("message") or local.response_hint or "Готово."
         return {"text": text, "action": local.action, "success": result.get("success", True)}
 
+    def _execute_ollama_action(self, parsed: dict[str, Any]) -> dict[str, Any]:
+        action = parsed.get("action", "chat")
+        if action == "chat":
+            return {"text": parsed.get("text", "Слушаю."), "action": "chat", "success": True}
+        params = parsed.get("params", {})
+        result = self.router.execute(action, **params)
+        text = result.get("message") or parsed.get("text", "Готово.")
+        return {"text": text, "action": action, "success": result.get("success", True)}
+
     def _execute_ai(self, command: str, wake_name: str) -> dict[str, Any]:
-        # Try Ollama first if available (works in Russia, offline)
-        if self.ollama.is_available():
+        provider = self.config.ai_provider
+
+        # Ollama first (default for Russia)
+        if provider in ("ollama", "both") and self.ollama.is_available() and self.ollama.has_model():
+            # Try parse as action
+            parsed = self.ollama.parse_command(command)
+            if parsed and parsed.get("action") and parsed["action"] != "chat":
+                return self._execute_ollama_action(parsed)
+            if parsed and parsed.get("action") == "chat":
+                return {"text": parsed.get("text", ""), "action": "ollama", "success": True}
+            # Plain chat
             try:
                 reply = self.ollama.chat(command)
                 return {"text": reply, "action": "ollama", "success": True}
             except Exception as exc:
-                logger.warning("Ollama failed: %s", exc)
+                logger.warning("Ollama chat failed: %s", exc)
 
-        # Fallback Gemini
-        if self.gemini:
+        # Gemini fallback
+        if provider in ("gemini", "both") and self.gemini:
             return self.gemini.process(command, wake_name)
 
+        # No AI
+        st = self.ollama.status()
+        if not st.get("running"):
+            return {
+                "text": (
+                    "Ollama не запущен.\n"
+                    "Запусти: scripts\\install_ollama.bat\n"
+                    "Или скачай: ollama.com"
+                ),
+                "action": None,
+                "success": False,
+            }
+        if not st.get("model_ready"):
+            return {
+                "text": (
+                    f"Модель {self.config.ollama_model} не загружена.\n"
+                    f"В терминале: ollama pull {self.config.ollama_model}"
+                ),
+                "action": None,
+                "success": False,
+            }
+
         return {
-            "text": (
-                "Не понял команду.\n"
-                "Примеры: «открой Discord», «сверни окна», «как дела».\n"
-                "Для сложных вопросов: Gemini ключ или Ollama (ollama.com)."
-            ),
+            "text": "Не понял. Примеры: «открой Discord», «сверни окна», «как дела?»",
             "action": None,
             "success": False,
         }
@@ -125,12 +159,8 @@ class KinAssistant:
 
             self._add_message("user", text)
 
-            # 1. LOCAL — no internet, no Gemini
             result = self._execute_local(wake.command)
-            if result is None and needs_ai(wake.command):
-                # 2. AI only for open questions
-                result = self._execute_ai(wake.command, wake.display_name)
-            elif result is None:
+            if result is None:
                 result = self._execute_ai(wake.command, wake.display_name)
 
             response_text = result.get("text", "")
@@ -147,7 +177,6 @@ class KinAssistant:
                 self._set_status("Слушаю...")
 
     def start(self) -> bool:
-        """Start — NO API key required for local commands."""
         self._active = True
         self._set_status("Слушаю...")
         if self.on_listening_change:
@@ -160,16 +189,10 @@ class KinAssistant:
                 self.on_listening_change(False)
             return False
 
-        hints = []
-        if self.gemini:
-            hints.append("Gemini")
-        if self.ollama.is_available():
-            hints.append("Ollama")
-        ai_note = f" AI: {', '.join(hints)}." if hints else " Команды работают локально без AI."
-
+        ollama_msg = OllamaClient.format_status_ru(self.ollama.status())
         self._add_message(
             "system",
-            f"Активирован. Обращайся: Кин, Джарvis, Астра.{ai_note}",
+            f"Активирован. Обращайся: Кин, Джарvis, Астра.\n{ollama_msg}",
         )
         return True
 
@@ -183,10 +206,16 @@ class KinAssistant:
     def send_text_command(self, text: str) -> dict[str, Any] | None:
         return self.process_text(text, source="text")
 
+    def reload_ollama(self, url: str, model: str) -> None:
+        self.ollama = OllamaClient(base_url=url, model=model)
+
     def reload_api_key(self, api_key: str) -> None:
-        if api_key and api_key != "your_gemini_api_key_here":
+        if api_key:
             self.gemini = GeminiClient(api_key=api_key, model_name=self.config.gemini_model)
             self.router.register_with_gemini(self.gemini)
+
+    def pull_ollama_model(self) -> tuple[bool, str]:
+        return self.ollama.pull_model()
 
     def _set_status(self, status: str) -> None:
         if self.on_status_change:

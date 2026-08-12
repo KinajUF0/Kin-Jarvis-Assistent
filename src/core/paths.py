@@ -129,8 +129,11 @@ def _bootstrap_env(target: Path) -> None:
             return
 
     target.write_text(
-        "GEMINI_API_KEY=your_gemini_api_key_here\n"
-        "GEMINI_MODEL=gemini-2.0-flash\n"
+        "GEMINI_API_KEY=\n"
+        "AI_PROVIDER=ollama\n"
+        "OLLAMA_URL=http://127.0.0.1:11434\n"
+        "OLLAMA_MODEL=llama3.2\n"
+        "GEMINI_MODEL=gemini-2.5-flash-lite\n"
         "SPEECH_LANGUAGE=ru-RU\n"
         "TTS_VOICE=ru-RU-DmitryNeural\n"
         "ASSISTANT_NAME=Кин\n",

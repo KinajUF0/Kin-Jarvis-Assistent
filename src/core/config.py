@@ -95,6 +95,19 @@ class Config:
         return os.getenv("DISCORD_PATH", "")
 
     @property
+    def ollama_url(self) -> str:
+        return os.getenv("OLLAMA_URL", self._settings.get("ollama", {}).get("url", "http://127.0.0.1:11434"))
+
+    @property
+    def ollama_model(self) -> str:
+        return os.getenv("OLLAMA_MODEL", self._settings.get("ollama", {}).get("model", "llama3.2"))
+
+    @property
+    def ai_provider(self) -> str:
+        """ollama | gemini | local"""
+        return os.getenv("AI_PROVIDER", self._settings.get("ai_provider", "ollama")).lower()
+
+    @property
     def apps(self) -> dict[str, Any]:
         return self._apps.get("apps", {})
 
@@ -111,14 +124,12 @@ class Config:
         return self._settings
 
     def validate(self) -> list[str]:
-        errors: list[str] = []
-        if not self.gemini_api_key or self.gemini_api_key == "your_gemini_api_key_here":
-            env_path = get_env_path()
-            errors.append(
-                f"GEMINI_API_KEY не задан.\n"
-                f"Откройте файл и вставьте ключ:\n{env_path}"
-            )
-        return errors
+        """Returns errors only if Gemini explicitly required — not for normal use."""
+        return []
+
+    def has_gemini_key(self) -> bool:
+        key = self.gemini_api_key
+        return bool(key and key != "your_gemini_api_key_here")
 
 
 def get_resource_path(relative: str):

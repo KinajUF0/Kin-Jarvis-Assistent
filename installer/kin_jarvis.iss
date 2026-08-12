@@ -2,7 +2,7 @@
 ; Build: iscc installer/kin_jarvis.iss
 
 #define MyAppName "Kin Jarvis"
-#define MyAppVersion "2.0.3"
+#define MyAppVersion "2.0.4"
 #define MyAppPublisher "Kinaj"
 #define MyAppURL "https://github.com/KinajUF0/Kin-Jarvis-Assistent"
 #define MyAppExeName "KinJarvis.exe"

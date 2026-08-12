@@ -131,7 +131,7 @@ class KinApp(ctk.CTk):
 
         # API key
         ctk.CTkLabel(
-            side, text="Gemini API ключ",
+            side, text="Gemini (опционально)",
             font=ctk.CTkFont(size=11), text_color=COLORS["muted"],
         ).pack(anchor="w", padx=16)
 

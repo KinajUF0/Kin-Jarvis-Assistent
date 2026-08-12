@@ -78,6 +78,7 @@ def parse_local_command(command: str) -> LocalCommand | None:
     m = _DISCORD_CHAT.search(cmd)
     if m:
         contact = (m.group(1) or m.group(2) or "").strip().rstrip(".")
+        contact = re.sub(r"^(?:с|with)\s+", "", contact, flags=re.I).strip()
         if contact:
             return LocalCommand(
                 "open_discord_chat",
