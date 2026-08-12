@@ -20,7 +20,7 @@ def test_wake_words() -> None:
     tests = [
         "Кин, открой Discord",
         "Джарвис, как дела?",
-        "Jarvis, open Chrome",
+        "Jarvis, open browser",
         "Астра, привет!",
         "Astra, what's up?",
         "Сiri, открой Discord",  # Should NOT match
@@ -39,7 +39,7 @@ def test_fuzzy_contacts() -> None:
     launcher = AppLauncher(config.apps)
     handler = DiscordHandler(launcher, config.discord_contacts, config.fuzzy_match_threshold)
 
-    queries = ["сэм", "Sam", "quins", "sex y", "Kinaj", "алексей", "несуществующий"]
+    queries = ["сэм", "Sam", "quins", "sex y", "Kinaj", "kinaj", "несуществующий"]
     for q in queries:
         contact = handler.find_contact(q)
         if contact:

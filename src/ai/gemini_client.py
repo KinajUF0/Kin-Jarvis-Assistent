@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import logging
 from typing import Any, Callable
 
@@ -11,93 +10,155 @@ from google.generativeai.types import FunctionDeclaration, Tool
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_PROMPT = """Ты — Кин (Kin/Jarvis/Astra), персональный AI-ассистент пользователя Алексея.
+SYSTEM_PROMPT = """Ты — Кин (Kin/Jarvis/Astra), персональный AI-ассистент пользователя Kinaj.
 Ты умный, вежливый, немного с юмором в стиле JARVIS из Iron Man.
 Отвечай на том же языке, на котором говорит пользователь (русский или английский).
 
-Твои возможности:
-- Открывать программы (Discord, браузер, Steam, Spotify и др.)
-- Открывать чаты в Discord по имени контакта (нечёткий поиск)
-- Управлять системой (громкость, выключение, блокировка)
-- Отвечать на любые вопросы и поддерживать беседу
-- Искать информацию и давать советы
+Твои возможности (используй функции для выполнения):
+- Открывать ЛЮБЫЕ программы (Discord, Steam, Spotify, блокнот, проводник и т.д.)
+- Открывать браузер пользователя (авто-определение: Edge, Chrome, Firefox и др.)
+- Открывать сайты и искать в интернете
+- Открывать папки и файлы
+- Discord: открывать чаты по имени (нечёткий поиск)
+- Система: громкость, блокировка, выключение, скриншот, горячие клавиши
+- Запуск команд в терминале
+- Отвечать на любые вопросы
 
-Когда пользователь просит открыть программу или чат — используй соответствующую функцию.
-Когда просто спрашивает «как дела» или болтает — отвечай естественно, без вызова функций.
-Будь кратким в голосовых ответах (1-3 предложения), подробнее в текстовых.
+ВАЖНО:
+- «браузер» / «browser» = браузер по умолчанию пользователя (НЕ предполагай Chrome!)
+- Когда просят открыть программу — вызывай open_application
+- Когда болтают — отвечай без функций
+- Голосовые ответы: 1-3 предложения
 """
 
 
-# Function declarations for Gemini function calling
 FUNCTIONS: list[FunctionDeclaration] = [
     FunctionDeclaration(
         name="open_application",
-        description="Открыть или запустить программу/приложение на компьютере",
+        description="Открыть/запустить любую программу. browser=браузер по умолчанию пользователя",
         parameters={
             "type": "object",
             "properties": {
                 "app_name": {
                     "type": "string",
-                    "description": "Название программы: discord, chrome, firefox, steam, spotify, telegram, vscode, notepad, explorer, calculator",
+                    "description": "discord, browser, edge, chrome, firefox, steam, spotify, telegram, vscode, notepad, explorer, calculator или любое имя программы",
                 }
             },
             "required": ["app_name"],
         },
     ),
     FunctionDeclaration(
-        name="open_discord_chat",
-        description="Открыть Discord и найти чат/DM с конкретным человеком по имени или нику",
+        name="close_application",
+        description="Закрыть программу",
         parameters={
             "type": "object",
-            "properties": {
-                "contact_name": {
-                    "type": "string",
-                    "description": "Имя, ник или часть ника контакта в Discord (например: Сэм, Sam, Quinsames)",
-                }
-            },
+            "properties": {"app_name": {"type": "string", "description": "Имя программы"}},
+            "required": ["app_name"],
+        },
+    ),
+    FunctionDeclaration(
+        name="open_discord_chat",
+        description="Открыть Discord и найти чат/DM с человеком по имени",
+        parameters={
+            "type": "object",
+            "properties": {"contact_name": {"type": "string", "description": "Имя или ник контакта"}},
             "required": ["contact_name"],
         },
     ),
     FunctionDeclaration(
-        name="set_volume",
-        description="Установить громкость системы",
+        name="open_url",
+        description="Открыть сайт/URL в браузере пользователя",
+        parameters={
+            "type": "object",
+            "properties": {"url": {"type": "string", "description": "URL сайта"}},
+            "required": ["url"],
+        },
+    ),
+    FunctionDeclaration(
+        name="web_search",
+        description="Поиск в Google через браузер пользователя",
+        parameters={
+            "type": "object",
+            "properties": {"query": {"type": "string", "description": "Поисковый запрос"}},
+            "required": ["query"],
+        },
+    ),
+    FunctionDeclaration(
+        name="open_folder",
+        description="Открыть папку в проводнике",
         parameters={
             "type": "object",
             "properties": {
-                "level": {
-                    "type": "integer",
-                    "description": "Уровень громкости от 0 до 100",
+                "path": {
+                    "type": "string",
+                    "description": "Путь или: downloads, desktop, documents, data, config, logs",
                 }
             },
+            "required": ["path"],
+        },
+    ),
+    FunctionDeclaration(
+        name="open_file",
+        description="Открыть файл",
+        parameters={
+            "type": "object",
+            "properties": {"path": {"type": "string", "description": "Путь к файлу"}},
+            "required": ["path"],
+        },
+    ),
+    FunctionDeclaration(
+        name="set_volume",
+        description="Установить громкость 0-100",
+        parameters={
+            "type": "object",
+            "properties": {"level": {"type": "integer", "description": "0-100"}},
             "required": ["level"],
         },
     ),
     FunctionDeclaration(
         name="system_action",
-        description="Выполнить системное действие",
+        description="Системное действие: shutdown, restart, sleep, lock, minimize_all",
         parameters={
             "type": "object",
-            "properties": {
-                "action": {
-                    "type": "string",
-                    "description": "Действие: shutdown, restart, sleep, lock, minimize_all",
-                }
-            },
+            "properties": {"action": {"type": "string", "description": "Действие"}},
             "required": ["action"],
         },
     ),
     FunctionDeclaration(
-        name="web_search",
-        description="Открыть браузер с поисковым запросом",
+        name="take_screenshot",
+        description="Сделать скриншот экрана",
+        parameters={"type": "object", "properties": {}, "required": []},
+    ),
+    FunctionDeclaration(
+        name="press_hotkey",
+        description="Нажать горячие клавиши",
         parameters={
             "type": "object",
-            "properties": {
-                "query": {
-                    "type": "string",
-                    "description": "Поисковый запрос",
-                }
-            },
-            "required": ["query"],
+            "properties": {"keys": {"type": "string", "description": "Например: ctrl+c, alt+tab, win+e"}},
+            "required": ["keys"],
+        },
+    ),
+    FunctionDeclaration(
+        name="open_settings",
+        description="Открыть настройки Windows",
+        parameters={
+            "type": "object",
+            "properties": {"page": {"type": "string", "description": "sound, bluetooth, display, wifi или пусто"}},
+            "required": [],
+        },
+    ),
+    FunctionDeclaration(
+        name="get_system_info",
+        description="Информация о системе: CPU, RAM, браузер, папки",
+        parameters={"type": "object", "properties": {}, "required": []},
+    ),
+    FunctionDeclaration(
+        name="run_command",
+        description="Выполнить команду в терминале/cmd",
+        parameters={
+            "type": "object",
+            "properties": {"command": {"type": "string", "description": "Команда"}},
+            "required": ["command"],
         },
     ),
 ]
@@ -119,25 +180,13 @@ class GeminiClient:
         self._action_handlers: dict[str, Callable[..., dict[str, Any]]] = {}
 
     def register_action(self, name: str, handler: Callable[..., dict[str, Any]]) -> None:
-        """Register a handler for a function call."""
         self._action_handlers[name] = handler
 
     def process(self, user_message: str, wake_word_name: str = "Кин") -> dict[str, Any]:
-        """
-        Process user message and return response dict.
-
-        Returns:
-            {
-                "text": str,           # Response text to speak/display
-                "action": str | None,  # Action that was executed
-                "success": bool,
-            }
-        """
         try:
             prompt = f"[Пользователь обратился: {wake_word_name}] {user_message}"
             response = self._chat.send_message(prompt)
 
-            # Check for function calls
             if response.candidates and response.candidates[0].content.parts:
                 for part in response.candidates[0].content.parts:
                     if hasattr(part, "function_call") and part.function_call:
@@ -148,22 +197,15 @@ class GeminiClient:
                         logger.info("Function call: %s(%s)", action_name, args)
 
                         handler = self._action_handlers.get(action_name)
-                        if handler:
-                            result = handler(**args)
-                        else:
-                            result = {"success": False, "message": f"Неизвестное действие: {action_name}"}
+                        result = handler(**args) if handler else {
+                            "success": False, "message": f"Неизвестное действие: {action_name}"
+                        }
 
-                        # Send function result back to model for natural response
                         message = result.get("message", "Готово.")
                         try:
-                            final = self._chat.send_message(
-                                {
-                                    "function_response": {
-                                        "name": action_name,
-                                        "response": result,
-                                    }
-                                }
-                            )
+                            final = self._chat.send_message({
+                                "function_response": {"name": action_name, "response": result}
+                            })
                             text = final.text or message
                         except Exception:
                             text = message
@@ -187,11 +229,9 @@ class GeminiClient:
             }
 
     def reset_chat(self) -> None:
-        """Reset conversation history."""
         self._chat = self._model.start_chat(history=[])
 
     def chat_text_only(self, message: str) -> str:
-        """Simple text chat without function calling (for UI typing)."""
         try:
             response = self._chat.send_message(message)
             return response.text or ""

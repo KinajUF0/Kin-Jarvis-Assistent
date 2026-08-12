@@ -33,7 +33,9 @@
 | Команда | Действие |
 |---------|----------|
 | `Кин, открой Discord` | Запуск / переключение Discord |
-| `Джарvis, открой Chrome` | Запуск Google Chrome |
+| `Кин, открой браузер` | Запуск **вашего** браузера (Edge/Chrome/Firefox — авто) |
+| `Джарvis, открой Edge` | Microsoft Edge |
+| `Кин, открой Chrome` | Google Chrome (если установлен) |
 | `Кин, открой Steam` | Запуск Steam |
 | `Астра, открой Spotify` | Запуск Spotify |
 | `Кин, открой Telegram` | Запуск Telegram |

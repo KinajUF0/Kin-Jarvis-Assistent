@@ -1,14 +1,20 @@
 {
   "apps": {
-    "discord": {
-      "display_name": "Discord",
-      "process_names": ["discord", "Discord"],
+    "browser": {
+      "display_name": "Браузер (по умолчанию)",
+      "process_names": ["msedge", "chrome", "firefox", "brave", "opera"],
+      "paths": [],
+      "auto_detect": true,
+      "notes": "Автоматически определяет Edge, Chrome, Firefox и др."
+    },
+    "edge": {
+      "display_name": "Microsoft Edge",
+      "process_names": ["msedge"],
       "paths": [
-        "%LOCALAPPDATA%\\Discord\\Update.exe --processStart Discord.exe",
-        "%LOCALAPPDATA%\\Discord\\app-1.0.9159\\Discord.exe",
-        "C:\\Users\\%USERNAME%\\AppData\\Local\\Discord\\Update.exe"
-      ],
-      "uri": "discord://"
+        "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+        "C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe",
+        "msedge"
+      ]
     },
     "chrome": {
       "display_name": "Google Chrome",
@@ -16,10 +22,8 @@
       "paths": [
         "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
         "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
-        "google-chrome",
-        "google-chrome-stable"
-      ],
-      "uri": "https://google.com"
+        "google-chrome"
+      ]
     },
     "firefox": {
       "display_name": "Mozilla Firefox",
@@ -29,39 +33,54 @@
         "firefox"
       ]
     },
+    "brave": {
+      "display_name": "Brave",
+      "process_names": ["brave"],
+      "paths": [
+        "C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe",
+        "%LOCALAPPDATA%\\BraveSoftware\\Brave-Browser\\Application\\brave.exe"
+      ]
+    },
+    "opera": {
+      "display_name": "Opera",
+      "process_names": ["opera"],
+      "paths": ["%LOCALAPPDATA%\\Programs\\Opera\\opera.exe"]
+    },
+    "yandex": {
+      "display_name": "Yandex Browser",
+      "process_names": ["browser"],
+      "paths": ["%LOCALAPPDATA%\\Yandex\\YandexBrowser\\Application\\browser.exe"]
+    },
+    "discord": {
+      "display_name": "Discord",
+      "process_names": ["discord", "Discord"],
+      "paths": [
+        "%LOCALAPPDATA%\\Discord\\Update.exe --processStart Discord.exe",
+        "%LOCALAPPDATA%\\Discord\\app-1.0.9159\\Discord.exe"
+      ],
+      "uri": "discord://"
+    },
     "steam": {
       "display_name": "Steam",
       "process_names": ["steam"],
-      "paths": [
-        "C:\\Program Files (x86)\\Steam\\steam.exe",
-        "steam"
-      ],
+      "paths": ["C:\\Program Files (x86)\\Steam\\steam.exe", "steam"],
       "uri": "steam://"
     },
     "spotify": {
       "display_name": "Spotify",
       "process_names": ["spotify"],
-      "paths": [
-        "%APPDATA%\\Spotify\\Spotify.exe",
-        "spotify"
-      ],
+      "paths": ["%APPDATA%\\Spotify\\Spotify.exe", "spotify"],
       "uri": "spotify:"
     },
     "telegram": {
       "display_name": "Telegram",
       "process_names": ["telegram"],
-      "paths": [
-        "%APPDATA%\\Telegram Desktop\\Telegram.exe",
-        "telegram-desktop"
-      ]
+      "paths": ["%APPDATA%\\Telegram Desktop\\Telegram.exe", "telegram-desktop"]
     },
     "vscode": {
       "display_name": "Visual Studio Code",
       "process_names": ["code"],
-      "paths": [
-        "code",
-        "C:\\Users\\%USERNAME%\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe"
-      ]
+      "paths": ["code", "%LOCALAPPDATA%\\Programs\\Microsoft VS Code\\Code.exe"]
     },
     "notepad": {
       "display_name": "Блокнот",

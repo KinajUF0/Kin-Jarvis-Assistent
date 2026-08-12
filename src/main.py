@@ -1,14 +1,5 @@
 #!/usr/bin/env python3
-"""
-Kin / Jarvis AI Assistant — Entry Point
-
-Personal AI assistant with voice control, Gemini AI,
-Discord integration, and application automation.
-
-Usage:
-    python -m src.main
-    python src/main.py
-"""
+"""Kin / Jarvis AI Assistant — Entry Point."""
 
 from __future__ import annotations
 
@@ -23,19 +14,20 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from src.core.assistant import KinAssistant
 from src.core.config import Config
+from src.core.paths import get_logs_dir, is_frozen
 from src.ui.app import KinApp
 
 
 def setup_logging(level: str = "INFO") -> None:
-    log_dir = PROJECT_ROOT / "kin_data"
-    log_dir.mkdir(exist_ok=True)
+    log_dir = get_logs_dir()
+    log_file = log_dir / "kin.log"
 
     logging.basicConfig(
         level=getattr(logging, level.upper(), logging.INFO),
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
         handlers=[
             logging.StreamHandler(sys.stdout),
-            logging.FileHandler(log_dir / "kin.log", encoding="utf-8"),
+            logging.FileHandler(log_file, encoding="utf-8"),
         ],
     )
 
@@ -45,13 +37,8 @@ def main() -> None:
     setup_logging(config.log_level)
 
     logger = logging.getLogger(__name__)
-    logger.info("Starting Kin/Jarvis AI Assistant...")
-
-    errors = config.validate()
-    if errors:
-        logger.warning("Configuration warnings:")
-        for err in errors:
-            logger.warning("  - %s", err)
+    mode = "EXE" if is_frozen() else "DEV"
+    logger.info("Starting Kin/Jarvis AI Assistant [%s]...", mode)
 
     assistant = KinAssistant(config)
     app = KinApp(assistant)

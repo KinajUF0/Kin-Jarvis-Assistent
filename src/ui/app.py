@@ -10,7 +10,9 @@ from typing import TYPE_CHECKING
 import customtkinter as ctk
 from PIL import Image
 
-from src.core.config import PROJECT_ROOT, WAKE_WORD_DISPLAY
+from src.core.config import WAKE_WORD_DISPLAY
+from src.core.paths import get_assets_dir, get_env_path, get_paths_info
+from src.actions.browser_detector import get_default_browser
 
 if TYPE_CHECKING:
     from src.core.assistant import KinAssistant
@@ -53,7 +55,7 @@ class KinApp(ctk.CTk):
         self.configure(fg_color=COLORS["bg_dark"])
 
         # Icon
-        logo_path = PROJECT_ROOT / "assets" / "logo.png"
+        logo_path = get_assets_dir() / "logo.png"
         if logo_path.exists():
             try:
                 img = Image.open(logo_path)
@@ -91,7 +93,7 @@ class KinApp(ctk.CTk):
         ).pack()
         ctk.CTkLabel(
             header,
-            text="AI Assistant v1.0",
+            text="AI Assistant v2.0",
             font=ctk.CTkFont(size=12),
             text_color=COLORS["text_muted"],
         ).pack()
@@ -166,11 +168,12 @@ class KinApp(ctk.CTk):
             text_color=COLORS["text_secondary"],
         ).pack(anchor="w", padx=20, pady=(15, 5))
 
+        default_browser = get_default_browser().display_name
         quick_actions = [
-            ("💬 Discord", lambda: self._quick_command("Кин, открой Discord")),
-            ("🌐 Chrome", lambda: self._quick_command("Джарвис, открой Chrome")),
-            ("🎮 Steam", lambda: self._quick_command("Кин, открой Steam")),
-            ("🔒 Блокировка", lambda: self._quick_command("Кин, заблокируй компьютер")),
+            ("Discord", lambda: self._quick_command("Кин, открой Discord")),
+            (f"Browser ({default_browser})", lambda: self._quick_command("Кин, открой браузер")),
+            ("Steam", lambda: self._quick_command("Кин, открой Steam")),
+            ("Lock PC", lambda: self._quick_command("Кин, заблокируй компьютер")),
         ]
 
         for label, cmd in quick_actions:
@@ -286,8 +289,103 @@ class KinApp(ctk.CTk):
         self._voice_btn.grid(row=0, column=2, padx=(8, 0))
 
         # Help tab
-        tab_help = self._tabs.add("📖 Справка")
+        tab_help = self._tabs.add("Help")
         self._build_help_tab(tab_help)
+
+        tab_settings = self._tabs.add("Settings")
+        self._build_settings_tab(tab_settings)
+
+        # Show API key warning if not configured
+        self.after(500, self._check_api_key)
+
+    def _build_settings_tab(self, parent: ctk.CTkFrame) -> None:
+        scroll = ctk.CTkScrollableFrame(parent, fg_color=COLORS["bg_dark"])
+        scroll.pack(fill="both", expand=True, padx=10, pady=10)
+
+        paths = get_paths_info()
+        browser = get_default_browser()
+
+        settings_text = f"""
+WHERE FILES ARE STORED
+======================
+
+Mode:           {paths['mode']}
+Program:        {paths['install_dir']}
+Your data:      {paths['data_dir']}
+Config:         {paths['config_dir']}
+Logs:           {paths['logs_dir']}
+API Key (.env): {paths['env_file']}
+
+Default browser: {browser.display_name}
+
+WHAT GOES WHERE
+===============
+
+- KinJarvis.exe        -> Program folder (do not edit)
+- .env                 -> Your Gemini API key
+- config/contacts.json -> Discord friends
+- config/apps.json     -> Programs list
+- logs/kin.log         -> Error logs
+
+FIRST TIME SETUP
+================
+
+1. Enter GEMINI_API_KEY below (or edit .env file)
+2. Add Discord contacts in config/contacts.json
+3. Click ACTIVATE and say: "Kin, open Discord"
+        """
+
+        ctk.CTkLabel(
+            scroll,
+            text=settings_text.strip(),
+            font=ctk.CTkFont(family="Consolas", size=12),
+            text_color=COLORS["text_secondary"],
+            justify="left",
+            anchor="w",
+        ).pack(fill="x", padx=10, pady=10)
+
+        ctk.CTkLabel(scroll, text="GEMINI API KEY", font=ctk.CTkFont(size=14, weight="bold"),
+                     text_color=COLORS["accent_cyan"]).pack(anchor="w", padx=10, pady=(10, 5))
+
+        self._api_key_entry = ctk.CTkEntry(scroll, width=500, height=36,
+                                            placeholder_text="Paste your key from aistudio.google.com/apikey")
+        self._api_key_entry.pack(anchor="w", padx=10, pady=5)
+
+        ctk.CTkButton(scroll, text="Save API Key", fg_color=COLORS["accent_cyan"],
+                      text_color=COLORS["bg_dark"], command=self._save_api_key).pack(anchor="w", padx=10, pady=10)
+
+        ctk.CTkButton(scroll, text="Open Config Folder", fg_color=COLORS["bg_card"],
+                      command=lambda: self._quick_command("Кин, открой папку config")).pack(anchor="w", padx=10, pady=5)
+
+        ctk.CTkButton(scroll, text="Open Logs Folder", fg_color=COLORS["bg_card"],
+                      command=lambda: self._quick_command("Кин, открой папку logs")).pack(anchor="w", padx=10, pady=5)
+
+    def _check_api_key(self) -> None:
+        errors = self.assistant.config.validate()
+        if errors:
+            self._tabs.set("Settings")
+            self._add_chat_bubble("system", errors[0], success=False)
+
+    def _save_api_key(self) -> None:
+        key = self._api_key_entry.get().strip()
+        if not key:
+            return
+        env_path = get_env_path()
+        lines = []
+        if env_path.exists():
+            lines = env_path.read_text(encoding="utf-8").splitlines()
+        updated = False
+        for i, line in enumerate(lines):
+            if line.startswith("GEMINI_API_KEY="):
+                lines[i] = f"GEMINI_API_KEY={key}"
+                updated = True
+                break
+        if not updated:
+            lines.append(f"GEMINI_API_KEY={key}")
+        env_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        import os
+        os.environ["GEMINI_API_KEY"] = key
+        self._add_chat_bubble("system", f"API key saved to {env_path}", success=True)
 
     def _build_help_tab(self, parent: ctk.CTkFrame) -> None:
         scroll = ctk.CTkScrollableFrame(parent, fg_color=COLORS["bg_dark"])

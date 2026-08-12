@@ -3,18 +3,18 @@
 from __future__ import annotations
 
 import os
-import sys
 from pathlib import Path
 from typing import Any
 
 import yaml
 from dotenv import load_dotenv
 
-# Project root: kin-jarvis-assistent/
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-CONFIG_DIR = PROJECT_ROOT / "config"
-ASSETS_DIR = PROJECT_ROOT / "assets"
-DATA_DIR = PROJECT_ROOT / "kin_data"
+from src.core.paths import (
+    get_config_dir,
+    get_data_dir,
+    get_env_path,
+    get_project_root,
+)
 
 # Wake words — only these names activate the assistant
 WAKE_WORDS = [
@@ -26,7 +26,6 @@ WAKE_WORDS = [
     "astra",
 ]
 
-# Wake word display names (for UI)
 WAKE_WORD_DISPLAY = {
     "джарвис": "Джарвис",
     "jarvis": "Jarvis",
@@ -36,17 +35,20 @@ WAKE_WORD_DISPLAY = {
     "astra": "Astra",
 }
 
+# Legacy aliases — use paths module instead
+PROJECT_ROOT = get_project_root()
+CONFIG_DIR = get_config_dir()
+DATA_DIR = get_data_dir()
+
 
 class Config:
     """Central configuration for the assistant."""
 
     def __init__(self) -> None:
-        load_dotenv(PROJECT_ROOT / ".env")
+        load_dotenv(get_env_path())
         self._settings = self._load_yaml(CONFIG_DIR / "settings.yaml")
         self._apps = self._load_json(CONFIG_DIR / "apps.json")
         self._contacts = self._load_json(CONFIG_DIR / "contacts.json")
-
-        DATA_DIR.mkdir(exist_ok=True)
 
     @staticmethod
     def _load_yaml(path: Path) -> dict[str, Any]:
@@ -109,17 +111,23 @@ class Config:
         return self._settings
 
     def validate(self) -> list[str]:
-        """Return list of configuration errors."""
         errors: list[str] = []
         if not self.gemini_api_key or self.gemini_api_key == "your_gemini_api_key_here":
-            errors.append("GEMINI_API_KEY не задан. Создайте .env из .env.example")
+            env_path = get_env_path()
+            errors.append(
+                f"GEMINI_API_KEY не задан.\n"
+                f"Откройте файл и вставьте ключ:\n{env_path}"
+            )
         return errors
 
 
-def get_resource_path(relative: str) -> Path:
-    """Resolve path to bundled resource (works with PyInstaller too)."""
+def get_resource_path(relative: str):
+    from pathlib import Path
+    from src.core.paths import get_bundle_dir, get_project_root
+    import sys
+
     if getattr(sys, "frozen", False):
-        base = Path(sys._MEIPASS)  # type: ignore[attr-defined]
+        base = get_bundle_dir()
     else:
-        base = PROJECT_ROOT
-    return base / relative
+        base = get_project_root()
+    return Path(base) / relative

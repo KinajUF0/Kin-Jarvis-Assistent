@@ -1,0 +1,56 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build EXE with PyInstaller
+        run: |
+          pyinstaller build/kin_jarvis.spec --noconfirm
+
+      - name: Install Inno Setup
+        run: choco install innosetup -y
+
+      - name: Build Installer
+        run: |
+          mkdir assets 2>$null
+          if (-not (Test-Path assets/logo.ico)) {
+            copy assets/logo.png assets/logo.ico -ErrorAction SilentlyContinue
+          }
+          iscc installer/kin_jarvis.iss
+
+      - name: Create portable ZIP
+        run: |
+          Compress-Archive -Path dist/KinJarvis/* -DestinationPath dist/KinJarvis-Portable.zip
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/installer/KinJarvis-Setup-*.exe
+            dist/KinJarvis-Portable.zip
+          generate_release_notes: true
+          draft: false
+          prerelease: false
